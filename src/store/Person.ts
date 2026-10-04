@@ -1,57 +1,52 @@
-import { v4 as uuidv4 } from "uuid";
 import { config } from "../config";
 
 export class Person {
-  id: string;
+  id: number;
   balance: number;
   isBroken: boolean;
-  balanceHistory: number[];
   totalIncome: number;
   totalExpenses: number;
-  paidTo: (string | null)[];
+  paidRounds: number;
+  paidTo: number | null;
 
-  constructor(balance = config.initialBalance) {
-    this.id = uuidv4();
+  constructor(id: number, balance = config.initialBalance) {
+    this.id = id;
     this.balance = balance;
-    this.isBroken = false;
-    this.balanceHistory = [balance];
+    this.isBroken = balance <= config.brokenThreshold;
     this.totalIncome = 0;
     this.totalExpenses = 0;
-    this.paidTo = [];
+    this.paidRounds = 0;
+    this.paidTo = null;
   }
 
   refreshBrokenState() {
     this.isBroken = this.balance <= config.brokenThreshold;
   }
 
-  startRound(): number {
+  startRound() {
     this.refreshBrokenState();
-    this.paidTo.push(null);
-    return this.paidTo.length - 1;
+    this.paidTo = null;
   }
 
-  selectTarget(candidateIds: string[], roundIndex: number): string | null {
-    if (this.isBroken) return null;
+  selectTarget(count: number): number | null {
+    if (this.isBroken || count <= 1) return null;
 
-    const candidates = candidateIds.filter((id) => id !== this.id);
-    if (candidates.length === 0) return null;
-
-    const targetId = candidates[Math.floor(Math.random() * candidates.length)];
-    this.paidTo[roundIndex] = targetId;
-    return targetId;
-  }
-
-  receive() {
-    this.balance += config.price;
-    this.totalIncome += config.price;
-    this.balanceHistory.push(this.balance);
-    this.refreshBrokenState();
+    let target = Math.floor(Math.random() * (count - 1));
+    if (target >= this.id) target++;
+    this.paidTo = target;
+    return target;
   }
 
   pay() {
-    this.balance -= config.price;
-    this.totalExpenses += config.price;
-    this.balanceHistory.push(this.balance);
-    this.refreshBrokenState();
+    const price = config.price;
+    this.balance -= price;
+    this.totalExpenses += price;
+    this.paidRounds++;
+  }
+
+  receive() {
+    const price = config.price;
+    this.balance += price;
+    this.totalIncome += price;
   }
 }
