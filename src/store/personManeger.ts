@@ -16,6 +16,25 @@ export const usePersonManagerStore = defineStore("personManager", {
   getters: {
     activePersons: (state) =>
       state.persons.filter((person) => !person.isBroken),
+
+    receivedFrom: (state): Record<string, string[][]> => {
+      const roundCount = state.persons[0]?.paidTo.length ?? 0;
+      const receivedFrom: Record<string, string[][]> = {};
+
+      for (const person of state.persons) {
+        receivedFrom[person.id] = Array.from({ length: roundCount }, () => []);
+      }
+
+      for (let roundIndex = 0; roundIndex < roundCount; roundIndex++) {
+        for (const payer of state.persons) {
+          const targetId = payer.paidTo[roundIndex];
+          if (!targetId) continue;
+          receivedFrom[targetId]?.[roundIndex].push(payer.id);
+        }
+      }
+
+      return receivedFrom;
+    },
   },
 
   actions: {
@@ -71,23 +90,6 @@ export const usePersonManagerStore = defineStore("personManager", {
     runRounds(count = config.rounds) {
       for (let i = 0; i < count; i++) {
         this.runRound();
-      }
-      this.settleReceivedFrom();
-    },
-
-    settleReceivedFrom() {
-      const roundCount = this.persons[0]?.paidTo.length ?? 0;
-
-      for (const person of this.persons) {
-        person.initReceivedFrom(roundCount);
-      }
-
-      for (let roundIndex = 0; roundIndex < roundCount; roundIndex++) {
-        for (const payer of this.persons) {
-          const targetId = payer.paidTo[roundIndex];
-          if (!targetId) continue;
-          this.getPersonById(targetId)?.recordIncoming(payer.id, roundIndex);
-        }
       }
     },
   },

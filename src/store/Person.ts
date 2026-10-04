@@ -9,7 +9,6 @@ export class Person {
   totalIncome: number;
   totalExpenses: number;
   paidTo: (string | null)[];
-  receivedFrom: string[][];
 
   constructor(balance = config.initialBalance) {
     this.id = uuidv4();
@@ -19,7 +18,6 @@ export class Person {
     this.totalIncome = 0;
     this.totalExpenses = 0;
     this.paidTo = [];
-    this.receivedFrom = [];
   }
 
   refreshBrokenState() {
@@ -55,13 +53,5 @@ export class Person {
     this.totalExpenses += config.price;
     this.balanceHistory.push(this.balance);
     this.refreshBrokenState();
-  }
-
-  initReceivedFrom(roundCount: number) {
-    this.receivedFrom = Array.from({ length: roundCount }, () => []);
-  }
-
-  recordIncoming(fromId: string, roundIndex: number) {
-    this.receivedFrom[roundIndex].push(fromId);
   }
 }
